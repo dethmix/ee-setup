@@ -3,6 +3,9 @@
   become: yes
   become_user: root
   become_method: sudo
+  vars:
+    aws_access_key_id: "XXXXXXXX"
+    aws_secret_access_key: "ZZZZZZZ"
 
   tasks:
   - name: install pip3
@@ -77,3 +80,37 @@
     when: not ee_stack_install is skipped
 
   #additional server setup
+  - name: Install awscli, boto3, s3-pit-restore
+    pip:
+      name: awscli, boto3, s3-pit-restore
+
+  - name: create .aws directory
+    file:
+      path: /root/.aws
+      state: directory
+
+  - name: create aws credential file
+    copy: content="[default]\naws_access_key_id = {{aws_access_key_id}}\naws_secret_access_key = {{aws_secret_access_key}}\nregion = us-west-1\n" dest=/root/.aws/credentials
+
+  - name: install monit
+    apt:
+      name: monit
+
+  - name: put monit config
+    copy:
+      backup: yes
+      src: configs/monitrc
+      dest: /etc/monit/monitrc
+
+  - name: put services monit config
+    copy:
+      backup: yes
+      src: "{{ item }}"
+      dest: /etc/monit/conf.d/
+    with_fileglob:
+      - configs/monit_conf/*
+
+  - name: restart monit
+    service:
+      name: monit
+      state: restarted

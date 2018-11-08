@@ -1,0 +1,79 @@
+---
+- hosts: webservers
+  become: yes
+  become_user: root
+  become_method: sudo
+
+  tasks:
+  - name: install pip3
+    apt:
+      name: python3-pip
+      update_cache: yes
+
+  - name: install pexpect
+    pip:
+      name: pexpect
+
+  - name: check that EE file exist, before checking EE status
+    stat:
+      path: /usr/local/bin/ee
+    register: ee_stat
+
+  - name: download ee file
+    get_url:
+      url: http://rt.cx/ee
+      dest: /tmp/ee
+    register: ee_download
+    when: ee_stat.stat.exists == False
+
+  - name: install ee
+    expect:
+      command: /bin/bash /tmp/ee
+      timeout: 600
+      responses:
+        'Enter your name:': test_ansible
+        'Enter your email:': ansible@ansible.com
+    register: ee_install
+    when: not ee_download is skipped
+
+  #TODO add autocompletion /etc/bash_completion.d/ee_auto.rc to bash profile
+
+  - name: Check easyengine stack status
+    command: ee stack status --nginx --mysql --php --postfix
+    register: ee_stack_status
+
+  - name: install easyengine stack
+    shell: /usr/local/bin/ee stack install --nginx --mysql --php7 --php --postfix --wpcli
+    register: ee_stack_install
+    when: ee_stack_status.stdout.count('not installed') > 0
+
+  # service section
+  - name: Enable and restart nginx
+    service:
+      name: nginx
+      state: restarted
+      enabled: yes
+    when: not ee_stack_install is skipped
+
+  - name: Enable and restart php5.6-fpm
+    service:
+      name: php5.6-fpm
+      state: restarted
+      enabled: yes
+    when: not ee_stack_install is skipped
+
+  - name: Enable and restart php7-fpm
+    service:
+      name: php7.0-fpm
+      state: restarted
+      enabled: yes
+    when: not ee_stack_install is skipped
+
+  - name: Enable and restart mysql
+    service:
+      name: mysql
+      state: restarted
+      enabled: yes
+    when: not ee_stack_install is skipped
+
+  #additional server setup

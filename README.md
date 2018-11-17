@@ -8,7 +8,7 @@ OS requirements Ubuntu 14+
 aws_access_key_id - AWS access key for backup user \
 aws_secret_access_key - AWS secret key for backup user \
 ee_name - Name which will be used during EE setup \
-ee_email - email address which will be used for EE setup and Let's Encrypt \
+ee_email - email address which will be used for EE setup and Let's Encrypt
 
 # Example of executing
 ```

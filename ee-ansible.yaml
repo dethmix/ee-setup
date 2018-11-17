@@ -6,6 +6,8 @@
   vars:
     aws_access_key_id: "XXXXXXXX"
     aws_secret_access_key: "ZZZZZZZ"
+    ee_name: "ansible"
+    ee_email: "ansible@ansible.com"
 
   tasks:
   - name: install pip3
@@ -34,8 +36,8 @@
       command: /bin/bash /tmp/ee
       timeout: 600
       responses:
-        'Enter your name:': test_ansible
-        'Enter your email:': ansible@ansible.com
+        'Enter your name:': "{{ ee_name }}"
+        'Enter your email:': "{{ ee_email }}"
     register: ee_install
     when: not ee_download is skipped
 
